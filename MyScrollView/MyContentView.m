@@ -13,17 +13,34 @@
 - (id)initWithFrame:(NSRect)frame
 {
     self = [super initWithFrame:frame];
-    if (self) {
+    if (self != nil) {
         // Initialization code here.
     }
-    
     return self;
+}
+
+- (void)drawLines:(BOOL)horizontal from:(CGFloat)from to:(CGFloat)to step:(CGFloat)step
+{
+    CGRect bounds = self.bounds;
+    for (CGFloat i = from; i <= to; i += step) {
+        NSRect rect;
+        if (horizontal) {
+            rect = NSMakeRect(bounds.origin.x - x + i, bounds.origin.y, 1, bounds.size.height);
+        } else {
+            rect = NSMakeRect(bounds.origin.x, bounds.origin.y + bounds.size.height - 1 + y - i, bounds.size.width, 1);
+        }
+        [NSBezierPath fillRect:rect];
+    }
 }
 
 - (void)drawRect:(NSRect)dirtyRect
 {
     [[NSColor whiteColor] set];
     [NSBezierPath fillRect:self.bounds];
+
+    [[NSColor grayColor] set];
+    [self drawLines:YES from:-200 to:400 + self.bounds.size.width step:20];
+    [self drawLines:NO from:-100 to:300 + self.bounds.size.height step:20];
 
     [[NSColor blackColor] set];
     NSString *string = [NSString stringWithFormat:@"x = %ld, y = %ld", x, y];

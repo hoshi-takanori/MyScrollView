@@ -7,10 +7,12 @@
 //
 
 #import "MyScrollView.h"
+#import "MyScroller.h"
 
 @interface MyScrollView ()
 
 - (void)createScrollers;
+- (void)resizeContents:(NSNotification *)notification;
 
 - (void)scrolledHorizontally:(id)sender;
 - (void)scrolledVertically:(id)sender;
@@ -28,6 +30,13 @@
     self = [super initWithFrame:frame];
     if (self != nil) {
         [self createScrollers];
+
+        if ([NSScroller respondsToSelector:@selector(preferredScrollerStyle)]) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(resizeContents:)
+                                                         name:NSPreferredScrollerStyleDidChangeNotification
+                                                       object:nil];
+        }
     }
     return self;
 }
@@ -36,17 +45,15 @@
 {
     NSRect bounds = self.bounds;
     CGFloat scrollerWidth = [NSScroller scrollerWidth];
-    NSRect horizontalRect = NSMakeRect(bounds.origin.x, bounds.origin.y,
-                                       bounds.size.width - scrollerWidth, scrollerWidth);
-    horizontalScroller = [[NSScroller alloc] initWithFrame:horizontalRect];
+
+    horizontalScroller = [[MyScroller alloc] initWithFrame:NSMakeRect(0, 0, bounds.size.width, scrollerWidth)];
     horizontalScroller.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
     horizontalScroller.enabled = YES;
     horizontalScroller.action = @selector(scrolledHorizontally:);
     horizontalScroller.target = self;
     [self addSubview:horizontalScroller];
-    NSRect verticalRect = NSMakeRect(bounds.origin.x + bounds.size.width - scrollerWidth, bounds.origin.y + scrollerWidth,
-                                     scrollerWidth, bounds.size.height - scrollerWidth);
-    verticalScroller = [[NSScroller alloc] initWithFrame:verticalRect];
+
+    verticalScroller = [[MyScroller alloc] initWithFrame:NSMakeRect(0, 0, scrollerWidth, bounds.size.height)];
     verticalScroller.autoresizingMask = NSViewMinXMargin | NSViewHeightSizable;
     verticalScroller.enabled = YES;
     verticalScroller.action = @selector(scrolledVertically:);
@@ -56,16 +63,51 @@
 
 - (void)setContentView:(NSView <MyScrollContent> *)view
 {
-    contentView = view;
+    if (view != contentView) {
+        [contentView removeFromSuperview];
+        [contentView release];
+
+        contentView = [view retain];
+        contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self addSubview:contentView positioned:NSWindowBelow relativeTo:nil];
+
+        [self resizeContents:nil];
+    }
+}
+
+- (void)resizeContents:(NSNotification *)notification
+{
+    NSScrollerStyle scrollerStyle = NSScrollerStyleLegacy;
+    CGFloat scrollerWidth;
+    if ([NSScroller respondsToSelector:@selector(preferredScrollerStyle)]) {
+        scrollerStyle = [NSScroller preferredScrollerStyle];
+        horizontalScroller.scrollerStyle = scrollerStyle;
+        verticalScroller.scrollerStyle = scrollerStyle;
+
+        scrollerWidth = [NSScroller scrollerWidthForControlSize:NSRegularControlSize scrollerStyle:scrollerStyle];
+        // BUG: +[NSScroller scrollerWidthForControlSize:scrollerStyle:] returns 15 for NSScrollerStyleOverlay...
+        if (scrollerStyle == NSScrollerStyleOverlay) {
+            scrollerWidth = 10;
+        }
+        horizontalScroller.knobAlphaValue = 1;
+        verticalScroller.knobAlphaValue = 1;
+    } else {
+        scrollerWidth = [NSScroller scrollerWidth];
+    }
 
     NSRect bounds = self.bounds;
-    CGFloat scrollerWidth = [NSScroller scrollerWidth];
-    view.frame = NSMakeRect(bounds.origin.x, bounds.origin.y + scrollerWidth,
-                            bounds.size.width - scrollerWidth, bounds.size.height - scrollerWidth);
-    view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [self addSubview:view];
+    horizontalScroller.frame = NSMakeRect(bounds.origin.x, bounds.origin.y,
+                                          bounds.size.width - scrollerWidth, scrollerWidth);
+    verticalScroller.frame = NSMakeRect(bounds.origin.x + bounds.size.width - scrollerWidth, bounds.origin.y + scrollerWidth,
+                                        scrollerWidth, bounds.size.height - scrollerWidth);
+    if (scrollerStyle == NSScrollerStyleLegacy) {
+        contentView.frame = NSMakeRect(bounds.origin.x, bounds.origin.y + scrollerWidth,
+                                       bounds.size.width - scrollerWidth, bounds.size.height - scrollerWidth);
+    } else {
+        contentView.frame = bounds;
+    }
 
-    [view updateScrollValues:self];
+    [contentView updateScrollValues:self];
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize
@@ -100,11 +142,11 @@
     MyScrollValueType newX = x;
     MyScrollValueType newY = y;
     if ([event respondsToSelector:@selector(scrollingDeltaX)]) {
-        newX += event.scrollingDeltaX;
-        newY += event.scrollingDeltaY;
+        newX -= event.scrollingDeltaX;
+        newY -= event.scrollingDeltaY;
     } else {
-        newX += event.deltaX;
-        newY += event.deltaY;
+        newX -= event.deltaX;
+        newY -= event.deltaY;
     }
     newX = (newX < minX) ? minX : (newX > maxX) ? maxX : newX;
     newY = (newY < minY) ? minY : (newY > maxY) ? maxY : newY;
@@ -113,6 +155,17 @@
         y = newY;
         [self commitScrollValues];
     }
+}
+
+- (void)dealloc
+{
+    if ([NSScroller respondsToSelector:@selector(preferredScrollerStyle)]) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
+    }
+    [contentView release];
+    [horizontalScroller release];
+    [verticalScroller release];
+    [super dealloc];
 }
 
 @end

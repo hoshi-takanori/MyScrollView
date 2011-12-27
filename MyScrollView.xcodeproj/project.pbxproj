@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8D2C872214A99BDC0027817A /* MyContentView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D2C872114A99BDC0027817A /* MyContentView.m */; };
+		8D2C872E14A9EEB30027817A /* MyScroller.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D2C872D14A9EEB30027817A /* MyScroller.m */; };
 		8D7A915B14A8D11900ACAB30 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D7A915A14A8D11900ACAB30 /* Cocoa.framework */; };
 		8D7A916514A8D11900ACAB30 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8D7A916314A8D11900ACAB30 /* InfoPlist.strings */; };
 		8D7A916714A8D11900ACAB30 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D7A916614A8D11900ACAB30 /* main.m */; };
@@ -20,6 +21,8 @@
 /* Begin PBXFileReference section */
 		8D2C872014A99BDC0027817A /* MyContentView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyContentView.h; sourceTree = "<group>"; };
 		8D2C872114A99BDC0027817A /* MyContentView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyContentView.m; sourceTree = "<group>"; };
+		8D2C872C14A9EEB30027817A /* MyScroller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyScroller.h; sourceTree = "<group>"; };
+		8D2C872D14A9EEB30027817A /* MyScroller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyScroller.m; sourceTree = "<group>"; };
 		8D7A915614A8D11900ACAB30 /* MyScrollView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyScrollView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D7A915A14A8D11900ACAB30 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		8D7A915D14A8D11900ACAB30 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -54,6 +57,8 @@
 			children = (
 				8D7A917714A8D1A900ACAB30 /* MyScrollView.h */,
 				8D7A917814A8D1A900ACAB30 /* MyScrollView.m */,
+				8D2C872C14A9EEB30027817A /* MyScroller.h */,
+				8D2C872D14A9EEB30027817A /* MyScroller.m */,
 				8D7A916014A8D11900ACAB30 /* MyScrollView */,
 				8D7A915914A8D11900ACAB30 /* Frameworks */,
 				8D7A915714A8D11900ACAB30 /* Products */,
@@ -180,6 +185,7 @@
 				8D7A916E14A8D11900ACAB30 /* AppDelegate.m in Sources */,
 				8D7A917914A8D1A900ACAB30 /* MyScrollView.m in Sources */,
 				8D2C872214A99BDC0027817A /* MyContentView.m in Sources */,
+				8D2C872E14A9EEB30027817A /* MyScroller.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

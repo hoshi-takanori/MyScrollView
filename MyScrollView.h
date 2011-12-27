@@ -11,6 +11,7 @@
 typedef NSInteger MyScrollValueType;
 
 @class MyScrollView;
+@class MyScroller;
 
 @protocol MyScrollContent <NSObject>
 
@@ -21,8 +22,8 @@ typedef NSInteger MyScrollValueType;
 
 @interface MyScrollView : NSView {
     NSView <MyScrollContent> *contentView;
-    NSScroller *horizontalScroller;
-    NSScroller *verticalScroller;
+    MyScroller *horizontalScroller;
+    MyScroller *verticalScroller;
 
     MyScrollValueType x, minX, maxX, knobX;
     MyScrollValueType y, minY, maxY, knobY;

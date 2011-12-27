@@ -8,12 +8,20 @@
 
 #import <AppKit/AppKit.h>
 
+@class MyScrollView;
+
 @interface MyScroller : NSScroller {
+    MyScrollView *scrollView;
+    NSTrackingArea *trackingArea;
+
     CGFloat knobAlphaValue;
-    CGFloat slotAlphaValue;
+    CGFloat knobSlotAlphaValue;
 }
 
+@property (nonatomic, assign) MyScrollView *scrollView;
 @property (nonatomic, assign) CGFloat knobAlphaValue;
-@property (nonatomic, assign) CGFloat slotAlphaValue;
+@property (nonatomic, assign) CGFloat knobSlotAlphaValue;
+
++ (CGFloat)scrollerWidthForScrollerStyle:(NSScrollerStyle)scrollerStyle;
 
 @end

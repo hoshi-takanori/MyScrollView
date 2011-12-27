@@ -8,6 +8,10 @@
 
 #import "MyContentView.h"
 
+#define WIDTH 1024
+#define HEIGHT 768
+#define STEP 16
+
 @implementation MyContentView
 
 - (id)initWithFrame:(NSRect)frame
@@ -25,9 +29,9 @@
     for (CGFloat i = from; i <= to; i += step) {
         NSRect rect;
         if (horizontal) {
-            rect = NSMakeRect(bounds.origin.x - x + i, bounds.origin.y, 1, bounds.size.height);
+            rect = NSMakeRect(bounds.origin.x - x + i, bounds.origin.y + bounds.size.height - 1 + y - HEIGHT, 1, HEIGHT + 1);
         } else {
-            rect = NSMakeRect(bounds.origin.x, bounds.origin.y + bounds.size.height - 1 + y - i, bounds.size.width, 1);
+            rect = NSMakeRect(bounds.origin.x - x, bounds.origin.y + bounds.size.height - 1 + y - i, WIDTH + 1, 1);
         }
         [NSBezierPath fillRect:rect];
     }
@@ -39,8 +43,8 @@
     [NSBezierPath fillRect:self.bounds];
 
     [[NSColor grayColor] set];
-    [self drawLines:YES from:-200 to:400 + self.bounds.size.width step:20];
-    [self drawLines:NO from:-100 to:300 + self.bounds.size.height step:20];
+    [self drawLines:YES from:0 to:WIDTH step:STEP];
+    [self drawLines:NO from:0 to:HEIGHT step:STEP];
 
     [[NSColor blackColor] set];
     NSString *string = [NSString stringWithFormat:@"x = %ld, y = %ld", x, y];
@@ -58,7 +62,11 @@
 - (void)updateScrollValues:(MyScrollView *)scrollView
 {
     NSRect bounds = self.bounds;
+    scrollView.minX = - bounds.size.width / 2;
+    scrollView.maxX = WIDTH - bounds.size.width / 2;
     scrollView.knobX = bounds.size.width;
+    scrollView.minY = - bounds.size.height / 2;
+    scrollView.maxY = HEIGHT - bounds.size.height / 2;
     scrollView.knobY = bounds.size.height;
     [scrollView commitScrollValues];
 }

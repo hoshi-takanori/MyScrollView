@@ -17,10 +17,6 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    scrollView.minX = -200;
-    scrollView.maxX = 400;
-    scrollView.minY = -100;
-    scrollView.maxY = 300;
     scrollView.contentView = [[[MyContentView alloc] init] autorelease];
 }
 

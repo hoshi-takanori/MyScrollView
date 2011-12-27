@@ -43,4 +43,7 @@ typedef NSInteger MyScrollValueType;
 
 - (void)commitScrollValues;
 
+- (void)mouseEnteredScroller:(MyScroller *)scroller;
+- (void)mouseExitedScroller:(MyScroller *)scroller;
+
 @end

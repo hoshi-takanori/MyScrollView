@@ -51,6 +51,7 @@
     horizontalScroller.enabled = YES;
     horizontalScroller.action = @selector(scrolledHorizontally:);
     horizontalScroller.target = self;
+    horizontalScroller.scrollView = self;
     [self addSubview:horizontalScroller];
 
     verticalScroller = [[MyScroller alloc] initWithFrame:NSMakeRect(0, 0, scrollerWidth, bounds.size.height)];
@@ -58,6 +59,7 @@
     verticalScroller.enabled = YES;
     verticalScroller.action = @selector(scrolledVertically:);
     verticalScroller.target = self;
+    verticalScroller.scrollView = self;
     [self addSubview:verticalScroller];
 }
 
@@ -84,11 +86,7 @@
         horizontalScroller.scrollerStyle = scrollerStyle;
         verticalScroller.scrollerStyle = scrollerStyle;
 
-        scrollerWidth = [NSScroller scrollerWidthForControlSize:NSRegularControlSize scrollerStyle:scrollerStyle];
-        // BUG: +[NSScroller scrollerWidthForControlSize:scrollerStyle:] returns 15 for NSScrollerStyleOverlay...
-        if (scrollerStyle == NSScrollerStyleOverlay) {
-            scrollerWidth = 10;
-        }
+        scrollerWidth = [MyScroller scrollerWidthForScrollerStyle:scrollerStyle];
         horizontalScroller.knobAlphaValue = 1;
         verticalScroller.knobAlphaValue = 1;
     } else {
@@ -118,6 +116,12 @@
 
 - (void)commitScrollValues
 {
+    if (maxX < minX) { maxX = minX; }
+    if (x < minX) { x = minX; }
+    if (x > maxX) { x = maxX; }
+    if (maxY < minY) { maxY = minY; }
+    if (y < minY) { y = minY; }
+    if (y > maxY) { y = maxY; }
     horizontalScroller.doubleValue = (double) (x - minX) / (maxX - minX);
     horizontalScroller.knobProportion = (double) knobX / (maxX - minX);
     verticalScroller.doubleValue = (double) (y - minY) / (maxY - minY);
@@ -155,6 +159,26 @@
         y = newY;
         [self commitScrollValues];
     }
+}
+
+- (void)viewWillStartLiveResize
+{
+    NSLog(@"viewWillStartLiveResize");
+}
+
+- (void)viewDidEndLiveResize
+{
+    NSLog(@"viewDidEndLiveResize");
+}
+
+- (void)mouseEnteredScroller:(MyScroller *)scroller
+{
+    NSLog(@"mouseEnteredScroller (%@)", scroller == horizontalScroller ? @"horizontal" : @"vertical");
+}
+
+- (void)mouseExitedScroller:(MyScroller *)scroller
+{
+    NSLog(@"mouseExitedScroller (%@)", scroller == horizontalScroller ? @"horizontal" : @"vertical");
 }
 
 - (void)dealloc

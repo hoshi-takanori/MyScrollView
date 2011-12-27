@@ -9,6 +9,9 @@
 #import "MyScrollView.h"
 #import "MyScroller.h"
 
+#define OVERLAY_DELAY 1
+#define OVERLAY_FADE 0.25
+
 @interface MyScrollView ()
 
 - (void)createScrollers;
@@ -16,6 +19,11 @@
 
 - (void)scrolledHorizontally:(id)sender;
 - (void)scrolledVertically:(id)sender;
+
+- (void)setState:(MyScrollViewState)newState;
+- (void)startTimer;
+- (void)stopTimer;
+- (void)overlayTimeout;
 
 @end
 
@@ -79,18 +87,11 @@
 
 - (void)resizeContents:(NSNotification *)notification
 {
-    NSScrollerStyle scrollerStyle = NSScrollerStyleLegacy;
-    CGFloat scrollerWidth;
-    if ([NSScroller respondsToSelector:@selector(preferredScrollerStyle)]) {
-        scrollerStyle = [NSScroller preferredScrollerStyle];
+    NSScrollerStyle scrollerStyle = [MyScroller preferredScrollerStyle];
+    CGFloat scrollerWidth = [MyScroller scrollerWidthForScrollerStyle:scrollerStyle];
+    if (scrollerStyle == NSScrollerStyleOverlay) {
         horizontalScroller.scrollerStyle = scrollerStyle;
         verticalScroller.scrollerStyle = scrollerStyle;
-
-        scrollerWidth = [MyScroller scrollerWidthForScrollerStyle:scrollerStyle];
-        horizontalScroller.knobAlphaValue = 1;
-        verticalScroller.knobAlphaValue = 1;
-    } else {
-        scrollerWidth = [NSScroller scrollerWidth];
     }
 
     NSRect bounds = self.bounds;
@@ -106,12 +107,20 @@
     }
 
     [contentView updateScrollValues:self];
+    if (state == MyScrollViewStateNormal) {
+        self.state = MyScrollViewStateKnobsHighlighted;
+        [self startTimer];
+    }
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize
 {
     [super resizeSubviewsWithOldSize:oldSize];
     [contentView updateScrollValues:self];
+    if (state == MyScrollViewStateNormal) {
+        self.state = MyScrollViewStateKnobsHighlighted;
+        [self startTimer];
+    }
 }
 
 - (void)commitScrollValues
@@ -158,27 +167,84 @@
         x = newX;
         y = newY;
         [self commitScrollValues];
+
+        if (state == MyScrollViewStateNormal) {
+            NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+            if (NSPointInRect(point, horizontalScroller.frame)) {
+                self.state = MyScrollViewStateHorizontalKnobSlot;
+            } else if (NSPointInRect(point, verticalScroller.frame)) {
+                self.state = MyScrollViewStateVerticalKnobSlot;
+            } else {
+                self.state = MyScrollViewStateKnobsHighlighted;
+                [self startTimer];
+            }
+        } else if (timerStarted) {
+            [self startTimer];
+        }
     }
+}
+
+- (void)setState:(MyScrollViewState)newState
+{
+    [self stopTimer];
+
+    if ([MyScroller preferredScrollerStyle] == NSScrollerStyleOverlay) {
+        state = newState;
+        [horizontalScroller setState:state knobSlotState:MyScrollViewStateHorizontalKnobSlot];
+        [verticalScroller setState:state knobSlotState:MyScrollViewStateVerticalKnobSlot];
+    } else {
+        state = MyScrollViewStateNormal;
+        horizontalScroller.hidden = NO;
+        verticalScroller.hidden = NO;
+    }
+}
+
+- (void)startTimer
+{
+    [self stopTimer];
+
+    if ([MyScroller preferredScrollerStyle] == NSScrollerStyleOverlay && state != MyScrollViewStateNormal) {
+        [self performSelector:@selector(overlayTimeout) withObject:nil afterDelay:OVERLAY_DELAY];
+        timerStarted = YES;
+    }
+}
+
+- (void)stopTimer
+{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(overlayTimeout) object:nil];
+    timerStarted = NO;
+}
+
+- (void)overlayTimeout
+{
+    self.state = MyScrollViewStateNormal;
+    timerStarted = NO;
 }
 
 - (void)viewWillStartLiveResize
 {
-    NSLog(@"viewWillStartLiveResize");
+    [super viewWillStartLiveResize];
+    self.state = MyScrollViewStateKnobsHighlighted;
 }
 
 - (void)viewDidEndLiveResize
 {
-    NSLog(@"viewDidEndLiveResize");
+    [super viewDidEndLiveResize];
+    [self startTimer];
 }
 
 - (void)mouseEnteredScroller:(MyScroller *)scroller
 {
-    NSLog(@"mouseEnteredScroller (%@)", scroller == horizontalScroller ? @"horizontal" : @"vertical");
+    if (scroller == horizontalScroller) {
+        self.state = MyScrollViewStateHorizontalKnobSlot;
+    } else {
+        self.state = MyScrollViewStateVerticalKnobSlot;
+    }
 }
 
 - (void)mouseExitedScroller:(MyScroller *)scroller
 {
-    NSLog(@"mouseExitedScroller (%@)", scroller == horizontalScroller ? @"horizontal" : @"vertical");
+    [self startTimer];
 }
 
 - (void)dealloc

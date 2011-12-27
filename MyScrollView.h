@@ -13,6 +13,13 @@ typedef NSInteger MyScrollValueType;
 @class MyScrollView;
 @class MyScroller;
 
+typedef enum {
+    MyScrollViewStateNormal,
+    MyScrollViewStateKnobsHighlighted,
+    MyScrollViewStateHorizontalKnobSlot,
+    MyScrollViewStateVerticalKnobSlot,
+} MyScrollViewState;
+
 @protocol MyScrollContent <NSObject>
 
 - (void)updateScrollValues:(MyScrollView *)scrollView;
@@ -27,6 +34,9 @@ typedef NSInteger MyScrollValueType;
 
     MyScrollValueType x, minX, maxX, knobX;
     MyScrollValueType y, minY, maxY, knobY;
+
+    MyScrollViewState state;
+    BOOL timerStarted;
 }
 
 @property (nonatomic, retain) IBOutlet NSView <MyScrollContent> *contentView;

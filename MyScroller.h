@@ -14,10 +14,12 @@
     MyScrollView *scrollView;
     NSTrackingArea *trackingArea;
 
+    CGFloat knobAlphaValue;
     BOOL knobSlotVisible;
 }
 
 @property (nonatomic, assign) MyScrollView *scrollView;
+@property (nonatomic, assign) CGFloat knobAlphaValue;
 
 + (NSScrollerStyle)preferredScrollerStyle;
 + (CGFloat)scrollerWidthForScrollerStyle:(NSScrollerStyle)scrollerStyle;

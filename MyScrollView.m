@@ -9,8 +9,9 @@
 #import "MyScrollView.h"
 #import "MyScroller.h"
 
-#define OVERLAY_DELAY 1
-#define OVERLAY_FADE 0.25
+#define OVERLAY_FADE_DELAY 1
+#define OVERLAY_FADE_INTERVAL 0.05
+#define OVERLAY_FADE_STEP 0.2
 
 @interface MyScrollView ()
 
@@ -60,6 +61,7 @@
     horizontalScroller.action = @selector(scrolledHorizontally:);
     horizontalScroller.target = self;
     horizontalScroller.scrollView = self;
+    horizontalScroller.knobAlphaValue = 1;
     [self addSubview:horizontalScroller];
 
     verticalScroller = [[MyScroller alloc] initWithFrame:NSMakeRect(0, 0, scrollerWidth, bounds.size.height)];
@@ -68,6 +70,7 @@
     verticalScroller.action = @selector(scrolledVertically:);
     verticalScroller.target = self;
     verticalScroller.scrollView = self;
+    verticalScroller.knobAlphaValue = 1;
     [self addSubview:verticalScroller];
 }
 
@@ -82,6 +85,9 @@
         [self addSubview:contentView positioned:NSWindowBelow relativeTo:nil];
 
         [self resizeContents:nil];
+
+        self.state = MyScrollViewStateKnobsHighlighted;
+        [self startTimer];
     }
 }
 
@@ -89,7 +95,7 @@
 {
     NSScrollerStyle scrollerStyle = [MyScroller preferredScrollerStyle];
     CGFloat scrollerWidth = [MyScroller scrollerWidthForScrollerStyle:scrollerStyle];
-    if (scrollerStyle == NSScrollerStyleOverlay) {
+    if ([horizontalScroller respondsToSelector:@selector(setScrollerStyle:)]) {
         horizontalScroller.scrollerStyle = scrollerStyle;
         verticalScroller.scrollerStyle = scrollerStyle;
     }
@@ -107,20 +113,16 @@
     }
 
     [contentView updateScrollValues:self];
-    if (state == MyScrollViewStateNormal) {
-        self.state = MyScrollViewStateKnobsHighlighted;
-        [self startTimer];
-    }
+
+    self.state = MyScrollViewStateNormal;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize
 {
     [super resizeSubviewsWithOldSize:oldSize];
     [contentView updateScrollValues:self];
-    if (state == MyScrollViewStateNormal) {
-        self.state = MyScrollViewStateKnobsHighlighted;
-        [self startTimer];
-    }
+    self.state = MyScrollViewStateKnobsHighlighted;
+    [self startTimer];
 }
 
 - (void)commitScrollValues
@@ -140,12 +142,14 @@
 
 - (void)scrolledHorizontally:(id)sender
 {
+    // TODO: check horizontalScroller.hitPart
     x = minX + horizontalScroller.doubleValue * (maxX - minX);
     [contentView scrollValueChanged:self];
 }
 
 - (void)scrolledVertically:(id)sender
 {
+    // TODO: check verticalScroller.hitPart
     y = minY + verticalScroller.doubleValue * (maxY - minY);
     [contentView scrollValueChanged:self];
 }
@@ -168,7 +172,7 @@
         y = newY;
         [self commitScrollValues];
 
-        if (state == MyScrollViewStateNormal) {
+        if (state == MyScrollViewStateNormal || fadeTimer != nil) {
             NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
             if (NSPointInRect(point, horizontalScroller.frame)) {
                 self.state = MyScrollViewStateHorizontalKnobSlot;
@@ -204,7 +208,7 @@
     [self stopTimer];
 
     if ([MyScroller preferredScrollerStyle] == NSScrollerStyleOverlay && state != MyScrollViewStateNormal) {
-        [self performSelector:@selector(overlayTimeout) withObject:nil afterDelay:OVERLAY_DELAY];
+        [self performSelector:@selector(overlayTimeout) withObject:nil afterDelay:OVERLAY_FADE_DELAY];
         timerStarted = YES;
     }
 }
@@ -212,13 +216,42 @@
 - (void)stopTimer
 {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(overlayTimeout) object:nil];
+
+    if (fadeTimer != nil) {
+        horizontalScroller.knobAlphaValue = 1;
+        [horizontalScroller setNeedsDisplay];
+        verticalScroller.knobAlphaValue = 1;
+        [verticalScroller setNeedsDisplay];
+        [fadeTimer invalidate];
+        fadeTimer = nil;
+    }
+
     timerStarted = NO;
 }
 
 - (void)overlayTimeout
 {
-    self.state = MyScrollViewStateNormal;
+    fadeTimer = [NSTimer timerWithTimeInterval:OVERLAY_FADE_INTERVAL
+                                        target:self
+                                      selector:@selector(fadeScrollers:)
+                                      userInfo:nil
+                                       repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:fadeTimer forMode:NSRunLoopCommonModes];
+
     timerStarted = NO;
+}
+
+- (void)fadeScrollers:(NSTimer*)timer
+{
+    CGFloat alpha = horizontalScroller.knobAlphaValue - OVERLAY_FADE_STEP;
+    if (alpha > 0) {
+        horizontalScroller.knobAlphaValue = alpha;
+        [horizontalScroller setNeedsDisplay];
+        verticalScroller.knobAlphaValue = alpha;
+        [verticalScroller setNeedsDisplay];
+    } else {
+        self.state = MyScrollViewStateNormal;
+    }
 }
 
 - (void)viewWillStartLiveResize
@@ -252,6 +285,7 @@
     if ([NSScroller respondsToSelector:@selector(preferredScrollerStyle)]) {
         [[NSNotificationCenter defaultCenter] removeObserver:self];
     }
+    [self stopTimer];
     [contentView release];
     [horizontalScroller release];
     [verticalScroller release];

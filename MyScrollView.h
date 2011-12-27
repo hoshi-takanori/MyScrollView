@@ -37,6 +37,7 @@ typedef enum {
 
     MyScrollViewState state;
     BOOL timerStarted;
+    NSTimer *fadeTimer;
 }
 
 @property (nonatomic, retain) IBOutlet NSView <MyScrollContent> *contentView;

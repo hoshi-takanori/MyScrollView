@@ -22,17 +22,18 @@
 - (void)scrolledVertically:(id)sender;
 
 - (void)setState:(MyScrollViewState)newState;
-- (void)startTimer;
-- (void)stopTimer;
+- (void)startOverlayTimer;
+- (void)stopOverlayTimer;
 - (void)overlayTimeout;
+- (void)fadeScrollers:(NSTimer*)timer;
 
 @end
 
 @implementation MyScrollView
 
 @synthesize contentView;
-@synthesize x, minX, maxX, knobX;
-@synthesize y, minY, maxY, knobY;
+@synthesize x, minX, maxX, knobX, lineX, pageX;
+@synthesize y, minY, maxY, knobY, lineY, pageY;
 
 - (id)initWithFrame:(NSRect)frame
 {
@@ -87,7 +88,7 @@
         [self resizeContents:nil];
 
         self.state = MyScrollViewStateKnobsHighlighted;
-        [self startTimer];
+        [self startOverlayTimer];
     }
 }
 
@@ -122,7 +123,7 @@
     [super resizeSubviewsWithOldSize:oldSize];
     [contentView updateScrollValues:self];
     self.state = MyScrollViewStateKnobsHighlighted;
-    [self startTimer];
+    [self startOverlayTimer];
 }
 
 - (void)commitScrollValues
@@ -134,63 +135,77 @@
     if (y < minY) { y = minY; }
     if (y > maxY) { y = maxY; }
     horizontalScroller.doubleValue = (double) (x - minX) / (maxX - minX);
-    horizontalScroller.knobProportion = (double) knobX / (maxX - minX);
+    horizontalScroller.knobProportion = (double) knobX / (maxX - minX + knobX);
     verticalScroller.doubleValue = (double) (y - minY) / (maxY - minY);
-    verticalScroller.knobProportion = (double) knobY / (maxY - minY);
+    verticalScroller.knobProportion = (double) knobY / (maxY - minY + knobY);
     [contentView scrollValueChanged:self];
 }
 
 - (void)scrolledHorizontally:(id)sender
 {
-    // TODO: check horizontalScroller.hitPart
-    x = minX + horizontalScroller.doubleValue * (maxX - minX);
-    [contentView scrollValueChanged:self];
+    MyScrollValueType dx = 0;
+    switch (horizontalScroller.hitPart) {
+        case NSScrollerIncrementLine:   dx = + lineX;   break;
+        case NSScrollerDecrementLine:   dx = - lineX;   break;
+        case NSScrollerIncrementPage:   dx = + pageX;   break;
+        case NSScrollerDecrementPage:   dx = - pageX;   break;
+    }
+    if (dx != 0) {
+        x += dx;
+        [self commitScrollValues];
+    } else {
+        x = minX + horizontalScroller.doubleValue * (maxX - minX);
+        [contentView scrollValueChanged:self];
+    }
 }
 
 - (void)scrolledVertically:(id)sender
 {
-    // TODO: check verticalScroller.hitPart
-    y = minY + verticalScroller.doubleValue * (maxY - minY);
-    [contentView scrollValueChanged:self];
+    MyScrollValueType dy = 0;
+    switch (verticalScroller.hitPart) {
+        case NSScrollerIncrementLine:   dy = + lineY;   break;
+        case NSScrollerDecrementLine:   dy = - lineY;   break;
+        case NSScrollerIncrementPage:   dy = + pageY;   break;
+        case NSScrollerDecrementPage:   dy = - pageY;   break;
+    }
+    if (dy != 0) {
+        y += dy;
+        [self commitScrollValues];
+    } else {
+        y = minY + verticalScroller.doubleValue * (maxY - minY);
+        [contentView scrollValueChanged:self];
+    }
 }
 
 - (void)scrollWheel:(NSEvent *)event
 {
-    MyScrollValueType newX = x;
-    MyScrollValueType newY = y;
     if ([event respondsToSelector:@selector(scrollingDeltaX)]) {
-        newX -= event.scrollingDeltaX;
-        newY -= event.scrollingDeltaY;
+        x -= event.scrollingDeltaX;
+        y -= event.scrollingDeltaY;
     } else {
-        newX -= event.deltaX;
-        newY -= event.deltaY;
+        x -= event.deltaX;
+        y -= event.deltaY;
     }
-    newX = (newX < minX) ? minX : (newX > maxX) ? maxX : newX;
-    newY = (newY < minY) ? minY : (newY > maxY) ? maxY : newY;
-    if (newX != x || newY != y) {
-        x = newX;
-        y = newY;
-        [self commitScrollValues];
+    [self commitScrollValues];
 
-        if (state == MyScrollViewStateNormal || fadeTimer != nil) {
-            NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-            if (NSPointInRect(point, horizontalScroller.frame)) {
-                self.state = MyScrollViewStateHorizontalKnobSlot;
-            } else if (NSPointInRect(point, verticalScroller.frame)) {
-                self.state = MyScrollViewStateVerticalKnobSlot;
-            } else {
-                self.state = MyScrollViewStateKnobsHighlighted;
-                [self startTimer];
-            }
-        } else if (timerStarted) {
-            [self startTimer];
+    if (state == MyScrollViewStateNormal || fadeTimer != nil) {
+        NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+        if (NSPointInRect(point, horizontalScroller.frame)) {
+            self.state = MyScrollViewStateHorizontalKnobSlot;
+        } else if (NSPointInRect(point, verticalScroller.frame)) {
+            self.state = MyScrollViewStateVerticalKnobSlot;
+        } else {
+            self.state = MyScrollViewStateKnobsHighlighted;
+            [self startOverlayTimer];
         }
+    } else if (overlayTimerStarted) {
+        [self startOverlayTimer];
     }
 }
 
 - (void)setState:(MyScrollViewState)newState
 {
-    [self stopTimer];
+    [self stopOverlayTimer];
 
     if ([MyScroller preferredScrollerStyle] == NSScrollerStyleOverlay) {
         state = newState;
@@ -203,17 +218,17 @@
     }
 }
 
-- (void)startTimer
+- (void)startOverlayTimer
 {
-    [self stopTimer];
+    [self stopOverlayTimer];
 
     if ([MyScroller preferredScrollerStyle] == NSScrollerStyleOverlay && state != MyScrollViewStateNormal) {
         [self performSelector:@selector(overlayTimeout) withObject:nil afterDelay:OVERLAY_FADE_DELAY];
-        timerStarted = YES;
+        overlayTimerStarted = YES;
     }
 }
 
-- (void)stopTimer
+- (void)stopOverlayTimer
 {
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(overlayTimeout) object:nil];
 
@@ -226,7 +241,7 @@
         fadeTimer = nil;
     }
 
-    timerStarted = NO;
+    overlayTimerStarted = NO;
 }
 
 - (void)overlayTimeout
@@ -238,7 +253,7 @@
                                        repeats:YES];
     [[NSRunLoop mainRunLoop] addTimer:fadeTimer forMode:NSRunLoopCommonModes];
 
-    timerStarted = NO;
+    overlayTimerStarted = NO;
 }
 
 - (void)fadeScrollers:(NSTimer*)timer
@@ -263,7 +278,7 @@
 - (void)viewDidEndLiveResize
 {
     [super viewDidEndLiveResize];
-    [self startTimer];
+    [self startOverlayTimer];
 }
 
 - (void)mouseEnteredScroller:(MyScroller *)scroller
@@ -277,7 +292,7 @@
 
 - (void)mouseExitedScroller:(MyScroller *)scroller
 {
-    [self startTimer];
+    [self startOverlayTimer];
 }
 
 - (void)dealloc
@@ -285,7 +300,7 @@
     if ([NSScroller respondsToSelector:@selector(preferredScrollerStyle)]) {
         [[NSNotificationCenter defaultCenter] removeObserver:self];
     }
-    [self stopTimer];
+    [self stopOverlayTimer];
     [contentView release];
     [horizontalScroller release];
     [verticalScroller release];

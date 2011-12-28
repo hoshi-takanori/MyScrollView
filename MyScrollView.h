@@ -32,11 +32,11 @@ typedef enum {
     MyScroller *horizontalScroller;
     MyScroller *verticalScroller;
 
-    MyScrollValueType x, minX, maxX, knobX;
-    MyScrollValueType y, minY, maxY, knobY;
+    MyScrollValueType x, minX, maxX, knobX, lineX, pageX;
+    MyScrollValueType y, minY, maxY, knobY, lineY, pageY;
 
     MyScrollViewState state;
-    BOOL timerStarted;
+    BOOL overlayTimerStarted;
     NSTimer *fadeTimer;
 }
 
@@ -46,11 +46,15 @@ typedef enum {
 @property (nonatomic, assign) MyScrollValueType minX;
 @property (nonatomic, assign) MyScrollValueType maxX;
 @property (nonatomic, assign) MyScrollValueType knobX;
+@property (nonatomic, assign) MyScrollValueType lineX;
+@property (nonatomic, assign) MyScrollValueType pageX;
 
 @property (nonatomic, assign) MyScrollValueType y;
 @property (nonatomic, assign) MyScrollValueType minY;
 @property (nonatomic, assign) MyScrollValueType maxY;
 @property (nonatomic, assign) MyScrollValueType knobY;
+@property (nonatomic, assign) MyScrollValueType lineY;
+@property (nonatomic, assign) MyScrollValueType pageY;
 
 - (void)commitScrollValues;
 

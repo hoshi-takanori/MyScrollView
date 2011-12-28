@@ -25,7 +25,7 @@
 
 - (void)drawLines:(BOOL)horizontal from:(CGFloat)from to:(CGFloat)to step:(CGFloat)step
 {
-    CGRect bounds = self.bounds;
+    NSRect bounds = self.bounds;
     for (CGFloat i = from; i <= to; i += step) {
         NSRect rect;
         if (horizontal) {
@@ -65,9 +65,13 @@
     scrollView.minX = - bounds.size.width / 2;
     scrollView.maxX = WIDTH - bounds.size.width / 2;
     scrollView.knobX = bounds.size.width;
+    scrollView.lineX = STEP;
+    scrollView.pageX = bounds.size.width;
     scrollView.minY = - bounds.size.height / 2;
     scrollView.maxY = HEIGHT - bounds.size.height / 2;
     scrollView.knobY = bounds.size.height;
+    scrollView.lineY = STEP;
+    scrollView.pageY = bounds.size.height;
     [scrollView commitScrollValues];
 }
 

@@ -52,13 +52,6 @@
     [string drawAtPoint:NSMakePoint(10, bounds.origin.y + bounds.size.height - 20) withAttributes:nil];
 }
 
-- (void)scrollValueChanged:(MyScrollView *)scrollView
-{
-    x = scrollView.x;
-    y = scrollView.y;
-    [self setNeedsDisplay:YES];
-}
-
 - (void)updateScrollValues:(MyScrollView *)scrollView
 {
     NSRect bounds = self.bounds;
@@ -73,6 +66,13 @@
     scrollView.lineY = STEP;
     scrollView.pageY = bounds.size.height;
     [scrollView commitScrollValues];
+}
+
+- (void)scrollValueChanged:(MyScrollView *)scrollView
+{
+    x = scrollView.x;
+    y = scrollView.y;
+    [self setNeedsDisplay:YES];
 }
 
 @end

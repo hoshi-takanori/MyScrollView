@@ -87,7 +87,7 @@
 
         [self resizeContents:nil];
 
-        self.state = MyScrollViewStateKnobsHighlighted;
+        self.state = MyScrollViewStateKnobsVisible;
         [self startOverlayTimer];
     }
 }
@@ -122,7 +122,7 @@
 {
     [super resizeSubviewsWithOldSize:oldSize];
     [contentView updateScrollValues:self];
-    self.state = MyScrollViewStateKnobsHighlighted;
+    self.state = MyScrollViewStateKnobsVisible;
     [self startOverlayTimer];
 }
 
@@ -195,7 +195,7 @@
         } else if (NSPointInRect(point, verticalScroller.frame)) {
             self.state = MyScrollViewStateVerticalKnobSlot;
         } else {
-            self.state = MyScrollViewStateKnobsHighlighted;
+            self.state = MyScrollViewStateKnobsVisible;
             [self startOverlayTimer];
         }
     } else if (overlayTimerStarted) {
@@ -246,6 +246,7 @@
 
 - (void)overlayTimeout
 {
+    // use timer instead of Core Animation which doesn't work for overlay scrollers.
     fadeTimer = [NSTimer timerWithTimeInterval:OVERLAY_FADE_INTERVAL
                                         target:self
                                       selector:@selector(fadeScrollers:)
@@ -272,7 +273,7 @@
 - (void)viewWillStartLiveResize
 {
     [super viewWillStartLiveResize];
-    self.state = MyScrollViewStateKnobsHighlighted;
+    self.state = MyScrollViewStateKnobsVisible;
 }
 
 - (void)viewDidEndLiveResize

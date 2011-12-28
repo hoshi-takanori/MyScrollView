@@ -8,21 +8,25 @@
 
 #import <Cocoa/Cocoa.h>
 
-typedef NSInteger MyScrollValueType;
-
 @class MyScrollView;
 @class MyScroller;
 
+// may be CGFloat
+typedef NSInteger MyScrollValueType;
+
 typedef enum {
     MyScrollViewStateNormal,
-    MyScrollViewStateKnobsHighlighted,
+    MyScrollViewStateKnobsVisible,
     MyScrollViewStateHorizontalKnobSlot,
     MyScrollViewStateVerticalKnobSlot,
 } MyScrollViewState;
 
 @protocol MyScrollContent <NSObject>
 
+// called when scroll view changed the size of content view
 - (void)updateScrollValues:(MyScrollView *)scrollView;
+
+// called when content view is scrolled
 - (void)scrollValueChanged:(MyScrollView *)scrollView;
 
 @end
@@ -35,27 +39,30 @@ typedef enum {
     MyScrollValueType x, minX, maxX, knobX, lineX, pageX;
     MyScrollValueType y, minY, maxY, knobY, lineY, pageY;
 
-    MyScrollViewState state;
-    BOOL overlayTimerStarted;
-    NSTimer *fadeTimer;
+    MyScrollViewState state;    // visual state of overlay scrollers
+    BOOL overlayTimerStarted;   // true if we are waiting to fade
+    NSTimer *fadeTimer;         // timer to control fading animation
 }
 
+// when set, content view is resized and added subview of the scroll view.
 @property (nonatomic, retain) IBOutlet NSView <MyScrollContent> *contentView;
 
-@property (nonatomic, assign) MyScrollValueType x;
-@property (nonatomic, assign) MyScrollValueType minX;
-@property (nonatomic, assign) MyScrollValueType maxX;
-@property (nonatomic, assign) MyScrollValueType knobX;
-@property (nonatomic, assign) MyScrollValueType lineX;
-@property (nonatomic, assign) MyScrollValueType pageX;
+@property (nonatomic, assign) MyScrollValueType x;      // scroll position x
+@property (nonatomic, assign) MyScrollValueType minX;   // minimum value of x
+@property (nonatomic, assign) MyScrollValueType maxX;   // maximum value of x
+@property (nonatomic, assign) MyScrollValueType knobX;  // knob size
+@property (nonatomic, assign) MyScrollValueType lineX;  // line scroll (pre Lion)
+@property (nonatomic, assign) MyScrollValueType pageX;  // page scroll
 
-@property (nonatomic, assign) MyScrollValueType y;
+@property (nonatomic, assign) MyScrollValueType y;      // scroll position y
 @property (nonatomic, assign) MyScrollValueType minY;
 @property (nonatomic, assign) MyScrollValueType maxY;
 @property (nonatomic, assign) MyScrollValueType knobY;
 @property (nonatomic, assign) MyScrollValueType lineY;
 @property (nonatomic, assign) MyScrollValueType pageY;
 
+// commit scroller values and call scrollValueChanged:
+// you should call when you change x, minX, maxX, etc.
 - (void)commitScrollValues;
 
 - (void)mouseEnteredScroller:(MyScroller *)scroller;

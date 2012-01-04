@@ -38,6 +38,7 @@
 		8D7A917014A8D11900ACAB30 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		8D7A917714A8D1A900ACAB30 /* MyScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyScrollView.h; sourceTree = "<group>"; };
 		8D7A917814A8D1A900ACAB30 /* MyScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyScrollView.m; sourceTree = "<group>"; };
+		8DA237FD14B4A02A0032DBD5 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +56,7 @@
 		8D7A914B14A8D11900ACAB30 = {
 			isa = PBXGroup;
 			children = (
+				8DA237FD14B4A02A0032DBD5 /* README.md */,
 				8D7A917714A8D1A900ACAB30 /* MyScrollView.h */,
 				8D7A917814A8D1A900ACAB30 /* MyScrollView.m */,
 				8D2C872C14A9EEB30027817A /* MyScroller.h */,
